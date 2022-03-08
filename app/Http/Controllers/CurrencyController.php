@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Currency;
+use App\Services\GuzzleHttp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -69,6 +70,32 @@ class CurrencyController extends Controller
             return response()->json(["success" => "Moeda excluída com sucesso"]);
         }
         return response()->json(["error" => "Não foi possível excluir a moeda, por favor tente mais tarde"]);
+    }
+
+    protected function getCurrencyHttp(Request $request)
+    {
+        if (!$user = Auth::user()) {
+            return response()->json(["error" => "Usuário não autenticado"]);
+        }
+
+        $guzzleHttp = new GuzzleHttp();
+        $guzzleHttp->url = "https://economia.awesomeapi.com.br/json/all/";
+        $guzzleHttp->currence_first =  $request->description;
+
+        if (!$dataResultHttp =  $guzzleHttp->getHttp()) {
+            return response()->json(["error" => "Ocorreu uma falha no nosso fornecedor de serviço, por favor tente mais tarde"]);
+        }
+
+        foreach ($dataResultHttp->data as $data) {
+            $dataCoin['code'] = $data->code;
+            $dataCoin['bid'] = $data->bid;
+            $dataCoin['name'] = $data->name;
+            $dataCoin['codein'] = $data->codein;
+        }
+
+        $coinResult = (object) $dataCoin;
+
+        return response()->json($coinResult);
     }
 
 }

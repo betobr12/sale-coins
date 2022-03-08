@@ -70,4 +70,25 @@ class Transaction extends Model
         })
         ->get();
     }
+
+    public function getSumTrasactionsUser()
+    {
+        if ($this->start_date == '') {
+            return array('transactions' => '0');
+        }
+
+        return DB::table('transactions as transaction')
+        ->selectRaw("
+            round(COALESCE(sum(COALESCE(transaction.value,0)),0),2) as transactions
+        ")
+
+        ->whereNull('transaction.deleted_at')
+        ->when($this->user_id, function ($query, $user_id) {
+            return $query->where('transaction.user_id', '=', $user_id);
+        })
+        ->when($this->start_date, function ($query, $start_date) {
+            return $query->where('transaction.created_at', '<',  $start_date);
+        })
+        ->first();
+    }
 }

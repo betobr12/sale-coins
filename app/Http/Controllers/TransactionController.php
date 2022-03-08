@@ -124,7 +124,7 @@ class TransactionController extends Controller
             return response()->json(["error" => "Usuário não autenticado"]);
         }
 
-        if (!$transaction = Transaction::where('id', '=', $request->id)->where('uuid', '=', $request->uuid)->where('user_id', '=', $user->id)->whereNull('deleted_at')->first()) {
+        if (!$transaction = Transaction::where('id', '=', $request->id)->where('uuid', '=', $request->uuid)->where('user_id', '=', $user->id)->whereNull('deleted_at')->whereNull('confirmad_date_at')->first()) {
             return response()->json(["error" => "Não foi possível localizar a transação, por favor tente mais tarde"]);
         }
 
@@ -144,5 +144,44 @@ class TransactionController extends Controller
             return response()->json(["success" => "Pagamento confirmado com sucesso"]);
         }
         return response()->json(["error" => "Não foi possível confirmar o pagamento, por favor tente mais tarde"]);
+    }
+
+    protected function delete(Request $request)
+    {
+        if (!$user = Auth::user()) {
+            return response()->json(["error" => "Usuário não autenticado"]);
+        }
+
+        if (!$transaction = Transaction::where('id', '=', $request->id)->where('uuid', '=', $request->uuid)->where('user_id', '=', $user->id)->whereNull('deleted_at')->whereNull('confirmad_date_at')->first()) {
+            return response()->json(["error" => "Não foi possível localizar a transação, por favor tente mais tarde"]);
+        }
+
+        $transaction->deleted_at  = \Carbon\Carbon::now();
+        $transaction->status_id   = 1;
+
+        if ($transaction->save()) {
+
+            $this->title            = 'Sua transação foi excluída';
+            $this->nameReceiver     = $user->name;
+            $this->emailReceiver    = $user->email;
+            $this->bladePage        = 'email.email';
+
+            if (!$this->sendEmail($this)) {
+                return response()->json(["error" => "Poxa, ocorreu um erro ao enviar a mensagem, por favor tente novamente mais tarde"]);
+            }
+            return response()->json(["success" => "Transação excluída com sucesso"]);
+        }
+        return response()->json(["error" => "Não foi possível excluir a transação, por favor tente mais tarde"]);
+    }
+
+    protected function getSumTrasactionsUser(Request $request)
+    {
+        if (!$user = Auth::user()) {
+            return response()->json(["error" => "Usuário não autenticado"]);
+        }
+        $transaction             = new Transaction();
+        $transaction->user_id = $user->id;
+        $transaction->start_date = \Carbon\Carbon::now();
+        return response()->json($transaction->getSumTrasactionsUser());
     }
 }

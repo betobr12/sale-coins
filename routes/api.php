@@ -5,6 +5,7 @@ use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/login',       [AuthController::class, 'login']);
+Route::post('/register',    [UserController::class, 'register']);
 
 Route::group(['middleware' => 'auth:api'], function() {
     Route::get('/',    [StatusController::class, 'get']);
@@ -28,6 +30,7 @@ Route::group(['middleware' => 'auth:api'], function() {
         Route::post('/',   [CurrencyController::class, 'new']);
         Route::get('/',    [CurrencyController::class, 'get']);
         Route::delete('/', [CurrencyController::class, 'delete']);
+        Route::get('/getCurrencyHttp',    [CurrencyController::class, 'getCurrencyHttp']);
     });
 
     Route::prefix('status')->group(function() {
@@ -42,9 +45,10 @@ Route::group(['middleware' => 'auth:api'], function() {
     });
 
     Route::prefix('transaction')->group(function() {
-        Route::post('/',                [TransactionController::class, 'new']);
-        Route::get('/',                 [TransactionController::class, 'get']);
-        Route::put('/confirmPayment',   [TransactionController::class, 'confirmPayment']);
+        Route::post('/',                 [TransactionController::class, 'new']);
+        Route::get('/',                  [TransactionController::class, 'get']);
+        Route::put('/confirmPayment',    [TransactionController::class, 'confirmPayment']);
+        Route::delete('/',               [TransactionController::class, 'delete']);
+        Route::get('/getSumTrasactionsUser', [TransactionController::class, 'getSumTrasactionsUser']);
     });
-
 });
