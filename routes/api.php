@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\StatusController;
+use App\Http\Controllers\TaxController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +19,32 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::post('/login',       [AuthController::class, 'login']);
+
+Route::group(['middleware' => 'auth:api'], function() {
+    Route::get('/',    [StatusController::class, 'get']);
+
+    Route::prefix('currency')->group(function() {
+        Route::post('/',   [CurrencyController::class, 'new']);
+        Route::get('/',    [CurrencyController::class, 'get']);
+        Route::delete('/', [CurrencyController::class, 'delete']);
+    });
+
+    Route::prefix('status')->group(function() {
+        Route::post('/',   [StatusController::class, 'new']);
+        Route::get('/',    [StatusController::class, 'get']);
+    });
+
+    Route::prefix('tax')->group(function() {
+        Route::post('/',   [TaxController::class, 'new']);
+        Route::get('/',    [TaxController::class, 'get']);
+        Route::put('/',    [TaxController::class, 'update']);
+    });
+
+    Route::prefix('transaction')->group(function() {
+        Route::post('/',                [TransactionController::class, 'new']);
+        Route::get('/',                 [TransactionController::class, 'get']);
+        Route::put('/confirmPayment',   [TransactionController::class, 'confirmPayment']);
+    });
+
 });
