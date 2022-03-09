@@ -67,8 +67,52 @@ class UserController extends Controller
         ])) {
             $user->save();
             $user->access_token = $user->createToken($request->email)->accessToken;
-            return response()->json(array("success" => "Usuário registrado com sucesso", "data" => $user));
+            return response()->json(array(
+                "success" => "Usuário registrado com sucesso",
+                "user" => $user
+            ));
         }
         return response()->json(array("error" => "Erro ao registrar o usuário"));
+    }
+
+    protected function update(Request $request)
+    {
+        $user = $request->user();
+        $data = $request->all();
+
+        if (isset($data['password'])) {
+            $validator = Validator::make($data, [
+                'password' => ['string', 'min:8','confirmed'],
+            ],[
+                'password.min'          => 'É necessário mais caracteres para senha',
+                'password.confirmed'    => 'Confirme sua senha com a mesma digitada anteriormente',
+               ]
+            );
+
+            if ($validator->fails()){
+                return response()->json(array("error" => $validator->errors()->first()));
+            }
+        }
+
+        if ($user = User::where('id','=',$user->id)->first()) {
+            $user->name         = $request->name ? $request->name : $user->name;
+            $user->email        = $request->email ? $request->email : $user->email;
+
+            if (isset($data['password'])) {
+                $user->password = Hash::make($data['password']);
+            }
+
+            if (!$user->save()){
+                return response()->json(array("error" => "Ocorreu uma falha ao alterar as informações, tente mais tarde"));
+            }
+
+            $user->access_token = $user->createToken($request->email)->accessToken;
+
+            return response()->json(array(
+                "success" => "Usuário alterado com sucesso",
+                "user" => $user)
+            );
+        }
+        return response()->json(array("error" => "Não foi possivel alterar o seu cadastro"));
     }
 }

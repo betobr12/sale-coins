@@ -25,6 +25,7 @@ Route::post('/register',    [UserController::class, 'register']);
 
 Route::group(['middleware' => 'auth:api'], function() {
     Route::get('/',    [StatusController::class, 'get']);
+    Route::put('/user',    [UserController::class, 'update']);
 
     Route::prefix('currency')->group(function() {
         Route::post('/',   [CurrencyController::class, 'new']);

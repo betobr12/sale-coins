@@ -65,6 +65,9 @@ class Transaction extends Model
         ->when($this->uuid, function ($query, $uuid) {
             return $query->where('transaction.id', '=', $uuid);
         })
+        ->when($this->user_id, function ($query, $user_id) {
+            return $query->where('transaction.user_id', '=', $user_id);
+        })
         ->when($this->onlyActive, function ($query, $onlyActive) {
             return $query->whereNull('transaction.deleted_at');
         })

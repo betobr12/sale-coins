@@ -21,7 +21,10 @@ class TransactionController extends Controller
         if (!$user = Auth::user()) {
             return response()->json(["error" => "Usuário não autenticado"]);
         }
-        $transaction->id = $request->id;
+        $transaction->id            = $request->id;
+        $transaction->uuid          = $request->uuid;
+        $transaction->user_id       = $request->user_id;
+        $transaction->onlyActive    = $request->onlyActive;
         return response()->json($transaction->getTransactions());
     }
 
@@ -80,7 +83,7 @@ class TransactionController extends Controller
 
         $coinResult = (object) $dataCoin;
 
-        if (!$transaction->create([
+        if (!$transactionData = $transaction->create([
             'uuid' => Str::orderedUuid(),
             'user_id' => $user->id,
             'status_id' => 3,
@@ -97,18 +100,24 @@ class TransactionController extends Controller
             return response()->json(["error" => "Não foi possível incluir a transação, por favor tente mais tarde"]);
         }
 
-        $this->title            = 'Transação incluida Aguardando a Sua Aprovação';
+        $this->title            = 'Transação incluída Aguardando a Sua Aprovação';
         $this->nameReceiver     = $user->name;
         $this->emailReceiver    = $user->email;
-        $this->bladePage        = 'email.email';
+        $this->transactionData  = $transactionData;
+        $this->codeCoin         = $coinResult->code;
+        $this->bladePage        = 'email.email_cot';
 
         if (!$this->sendEmail($this)) {
             return response()->json(["error" => "Poxa, ocorreu um erro ao enviar a mensagem, por favor tente novamente mais tarde"]);
         }
 
+        $transactionNew = new Transaction();
+        $transactionNew->user_id       = $user->id;
+        $transactionNew->onlyActive    = 1;
+
         return response()->json([
             "success" => "Transação incluída com sucesso, favor confirme o pagamento",
-            "data"    => $transaction->getTransactions()[0]
+            "data"    => $transactionNew->getTransactions()
         ]);
     }
 
@@ -141,7 +150,15 @@ class TransactionController extends Controller
             if (!$this->sendEmail($this)) {
                 return response()->json(["error" => "Poxa, ocorreu um erro ao enviar a mensagem, por favor tente novamente mais tarde"]);
             }
-            return response()->json(["success" => "Pagamento confirmado com sucesso"]);
+
+            $transaction = new Transaction();
+            $transaction->user_id       = $user->id;
+            $transaction->onlyActive    = 1;
+
+            return response()->json([
+                "success" => "Pagamento confirmado com sucesso",
+                "data"    => $transaction->getTransactions()
+            ]);
         }
         return response()->json(["error" => "Não foi possível confirmar o pagamento, por favor tente mais tarde"]);
     }
@@ -169,7 +186,15 @@ class TransactionController extends Controller
             if (!$this->sendEmail($this)) {
                 return response()->json(["error" => "Poxa, ocorreu um erro ao enviar a mensagem, por favor tente novamente mais tarde"]);
             }
-            return response()->json(["success" => "Transação excluída com sucesso"]);
+
+            $transaction = new Transaction();
+            $transaction->user_id       = $user->id;
+            $transaction->onlyActive    = 1;
+
+            return response()->json([
+                "success" => "Transação excluída com sucesso",
+                "data"    => $transaction->getTransactions()
+            ]);
         }
         return response()->json(["error" => "Não foi possível excluir a transação, por favor tente mais tarde"]);
     }
